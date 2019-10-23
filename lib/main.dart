@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 void main() => runApp(MyApp());
 
@@ -10,6 +12,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       theme: ThemeData(
         primarySwatch: Colors.indigo,
+        bottomSheetTheme:
+            BottomSheetThemeData(backgroundColor: Colors.black.withOpacity(0)),
       ),
       home: MyHomePage(),
     );
@@ -25,12 +29,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   double blurEffect = 0.0;
+  String pictureUrl;
+  File _image;
 
   @override
   Widget build(BuildContext context) {
     int width = MediaQuery.of(context).size.width.toInt();
     int height = MediaQuery.of(context).size.height.toInt();
-    String pictureUrl = reloadPictureUrl(width, height);
+    ImageProvider selectedImage;
+    if (_image == null) {
+      reloadPictureUrl(width, height);
+      selectedImage = NetworkImage(pictureUrl);
+    } else {
+      selectedImage = FileImage(_image);
+    }
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -40,7 +52,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Container(
             decoration: BoxDecoration(
-              image: DecorationImage(image: NetworkImage(pictureUrl)),
+              image: DecorationImage(image: selectedImage),
             ),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: blurEffect, sigmaY: blurEffect),
@@ -81,12 +93,10 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                     FloatingActionButton(
                       onPressed: () {
-                        setState(() {
-                          imageCache.clear();
-                          pictureUrl = reloadPictureUrl(width, height);
-                        });
+                        showImageSelectionBottomSheet(context, width, height);
                       },
-                      child: Icon(Icons.cloud_download),
+                      tooltip: 'Get new image',
+                      child: Icon(Icons.image),
                       backgroundColor: Theme.of(context).primaryColor,
                     ),
                   ],
@@ -99,7 +109,55 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  String reloadPictureUrl(int width, int height) {
-    return "https://picsum.photos/$width/$height";
+  void showImageSelectionBottomSheet(
+      BuildContext context, int screenWidth, int screenHeight) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: <Widget>[
+            Expanded(
+              child: FloatingActionButton(
+                onPressed: () {
+                  setState(() {
+                    imageCache.clear();
+                    reloadPictureUrl(screenWidth, screenHeight);
+                    Navigator.of(context).pop();
+                  });
+                },
+                tooltip: 'Internet',
+                child: Icon(Icons.cloud_download),
+                backgroundColor: Theme.of(context).primaryColor,
+              ),
+            ),
+            Expanded(
+              child: FloatingActionButton(
+                onPressed: () {
+                  getImage();
+                  Navigator.of(context).pop();
+                },
+                tooltip: 'Gallery',
+                child: Icon(Icons.image),
+                backgroundColor: Theme.of(context).primaryColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  reloadPictureUrl(int width, int height) {
+    pictureUrl = "https://picsum.photos/$width/$height";
+    _image = null;
+  }
+
+  Future getImage() async {
+    ImagePicker.pickImage(source: ImageSource.gallery).then((value) {
+      setState(() {
+        _image = value;
+      });
+    });
   }
 }
