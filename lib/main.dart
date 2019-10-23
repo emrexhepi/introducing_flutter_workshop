@@ -30,7 +30,11 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          Image.network(pictureUrl),
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(image: NetworkImage(pictureUrl)),
+            ),
+          ),
           SafeArea(
             child: Align(
               alignment: Alignment.bottomCenter,
@@ -38,7 +42,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: FloatingActionButton(
                   onPressed: () {
-                    setState(() {});
+                    setState(() {
+                      imageCache.clear();
+                    });
                   },
                   child: Icon(Icons.cloud_download),
                   backgroundColor: Theme.of(context).primaryColor,
@@ -52,8 +58,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   String reloadPictureUrl(int width, int height) {
-    // The timestampSuffix is added to the pictureUrl to bypass Image caching issues
-    var timestampSuffix = DateTime.now().millisecondsSinceEpoch.toString();
-    return "https://picsum.photos/$width/$height?timestamp=$timestampSuffix";
+    return "https://picsum.photos/$width/$height";
   }
 }
