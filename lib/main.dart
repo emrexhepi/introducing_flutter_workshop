@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -22,6 +24,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  double blurEffect = 0.0;
+
   @override
   Widget build(BuildContext context) {
     int width = MediaQuery.of(context).size.width.toInt();
@@ -30,9 +34,19 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       body: Stack(
         children: <Widget>[
+          Align(
+            alignment: Alignment.center,
+            child: CircularProgressIndicator(),
+          ),
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(image: NetworkImage(pictureUrl)),
+            ),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: blurEffect, sigmaY: blurEffect),
+              child: Container(
+                decoration: BoxDecoration(color: Colors.white.withOpacity(0.0)),
+              ),
             ),
           ),
           SafeArea(
@@ -40,14 +54,42 @@ class _MyHomePageState extends State<MyHomePage> {
               alignment: Alignment.bottomCenter,
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: FloatingActionButton(
-                  onPressed: () {
-                    setState(() {
-                      imageCache.clear();
-                    });
-                  },
-                  child: Icon(Icons.cloud_download),
-                  backgroundColor: Theme.of(context).primaryColor,
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        margin: EdgeInsets.only(right: 32.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(40.0),
+                          child: Container(
+                            height: 40,
+                            color: Colors.white54,
+                            child: Slider(
+                              min: 0,
+                              divisions: 10,
+                              max: 11,
+                              value: blurEffect,
+                              onChanged: (value) {
+                                setState(() {
+                                  blurEffect = value;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    FloatingActionButton(
+                      onPressed: () {
+                        setState(() {
+                          imageCache.clear();
+                          pictureUrl = reloadPictureUrl(width, height);
+                        });
+                      },
+                      child: Icon(Icons.cloud_download),
+                      backgroundColor: Theme.of(context).primaryColor,
+                    ),
+                  ],
                 ),
               ),
             ),
